@@ -5,34 +5,34 @@ public class View {
         System.out.println("Начинаем сбор вакансий....");
         showPremiumVacancies();
         showSimpleVacancies();
-        System.out.println("Анализ завершён.");
-        int sum = Parser.getPremiumVacancies().size() + Parser.getSimpleVacancies().size();
-        System.out.println("Найдено вакансий: " + sum);
+        ConsoleHelper.writeMessage("Анализ завершён.");
+        int sum = Parser.getPremiumVacancy().vacancies.size() + Parser.getSimpleVacancy().vacancies.size();
+        ConsoleHelper.writeMessage("Найдено вакансий: " + sum);
     }
 
     private static void showPremiumVacancies(){
-        System.out.println("Премиум вакансии: ");
-        System.out.println("------------------------------");
-        for(Vacancy vacancy : Parser.getPremiumVacancies()){
-            System.out.println(vacancy.getName());
-            System.out.println(vacancy.getCompany());
-            System.out.println(vacancy.getResponsibility());
-            System.out.println(vacancy.getRequirement());
-            System.out.println(vacancy.getSalary());
-            System.out.println("------------------------------");
+        ConsoleHelper.writeMessage("Премиум вакансии: ");
+        ConsoleHelper.writeMessage("------------------------------");
+        for(Vacancy vacancy : Parser.getPremiumVacancy().vacancies){
+            ConsoleHelper.writeMessage(vacancy.getName());
+            ConsoleHelper.writeMessage(vacancy.getCompany());
+            ConsoleHelper.writeMessage(vacancy.getResponsibility());
+            ConsoleHelper.writeMessage(vacancy.getRequirement());
+            ConsoleHelper.writeMessage(vacancy.getSalary());
+            ConsoleHelper.writeMessage("------------------------------");
         }
     }
 
     private static void showSimpleVacancies(){
-        System.out.println("Простые вакансии: ");
-        System.out.println("------------------------------");
-        for(Vacancy vacancy : Parser.getSimpleVacancies()){
-            System.out.println(vacancy.getName());
-            System.out.println(vacancy.getCompany());
-            System.out.println(vacancy.getResponsibility());
-            System.out.println(vacancy.getRequirement());
-            System.out.println(vacancy.getSalary());
-            System.out.println("------------------------------");
+        ConsoleHelper.writeMessage("Простые вакансии: ");
+        ConsoleHelper.writeMessage("------------------------------");
+        for(Vacancy vacancy : Parser.getSimpleVacancy().vacancies){
+            ConsoleHelper.writeMessage(vacancy.getName());
+            ConsoleHelper.writeMessage(vacancy.getCompany());
+            ConsoleHelper.writeMessage(vacancy.getResponsibility());
+            ConsoleHelper.writeMessage(vacancy.getRequirement());
+            ConsoleHelper.writeMessage(vacancy.getSalary());
+            ConsoleHelper.writeMessage("------------------------------");
         }
     }
 }

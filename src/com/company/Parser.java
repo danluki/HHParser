@@ -2,120 +2,82 @@ package com.company;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
-import org.jsoup.select.Elements;
+import org.jsoup.nodes.Element;
 
-import javax.print.DocFlavor;
+import java.io.BufferedReader;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.io.InputStreamReader;
 
 public class Parser {
-    private static final String URL = "https://hh.ru/search/vacancy?L_is_autosearch=false&area=1&clusters=true&enable_snippets=true&text=java&page=";
-    private static Document html;
-    private static Elements premiumVacanciesElements;
-    private static Elements simpleVacanciesElements;
-    private static List<Vacancy> premiumVacancies = new ArrayList<>();
-    private static List<Vacancy> simpleVacancies = new ArrayList<>();
+    private static final String URL_FORMAT = "https://hh.ru/search/vacancy?text=java&page=";
+    private static String url;
+    private static Vacancy premiumVacancy = new Vacancy();
+    private static Vacancy simpleVacancy = new Vacancy();
     private static int pageNumber = 0;
-    public Parser(){
 
+    public Parser() throws IOException {
+        ConsoleHelper.writeMessage("Введите название вакансии");
+        String jobName = ConsoleHelper.readString();
+        url = URL_FORMAT.replaceAll("(?<==).*(?=&)", jobName).replaceAll(" ", "");
         while(true) {
             try {
-                html = getHeadHunterHtml();
-                premiumVacanciesElements = html.getElementsByAttributeValue("data-qa", "vacancy-serp__vacancy vacancy-serp__vacancy_premium");
-                simpleVacanciesElements = html.getElementsByAttributeValue("data-qa", "vacancy-serp__vacancy");
-                parsePremiumVacancies();
-                parseSimpleVacancies();
+                Document html = getHeadHunterHtml();
+                premiumVacancy.elements = html
+                        .getElementsByAttributeValue("data-qa", "vacancy-serp__vacancy vacancy-serp__vacancy_premium");
+                simpleVacancy.elements = html
+                        .getElementsByAttributeValue("data-qa", "vacancy-serp__vacancy");
+                parseVacancies(premiumVacancy);
+                parseVacancies(simpleVacancy);
             }
             catch (NullPointerException | IOException e){
                 break;
+
             }
         }
     }
 
-    private void parsePremiumVacancies(){
-        for(int i = 0; i < premiumVacanciesElements.size(); i++){
-            Vacancy premiumVacancy = new Vacancy();
-            premiumVacancy.setName(premiumVacanciesElements.get(i).getElementsByAttributeValue("data-qa", "vacancy-serp__vacancy-title").get(0).text());
+    private void parseVacancies(Vacancy vacancy){
+        for(Element element : vacancy.elements){
+            Vacancy vac = new Vacancy();
 
-            try{
-                premiumVacancy.setCompany(premiumVacanciesElements.get(i).getElementsByAttributeValue("data-qa", "vacancy-serp__vacancy-employer").get(0).text());
-            }
-            catch (IndexOutOfBoundsException e){
-                premiumVacancy.setCompany("Не указана");
-            }
+            Element name = element.getElementsByAttributeValue("data-qa", "vacancy-serp__vacancy-title").first();
+            String n = name == null ? "Не указано" : name.text();
+            vac.setName(n);
 
-            premiumVacancy.setResponsibility(premiumVacanciesElements.get(i).getElementsByAttributeValue("data-qa", "vacancy-serp__vacancy_snippet_responsibility").get(0).text());
-            premiumVacancy.setRequirement(premiumVacanciesElements.get(i).getElementsByAttributeValue("data-qa", "vacancy-serp__vacancy_snippet_requirement").get(0).text());
-            try {
-                String salary = premiumVacanciesElements.get(i).getElementsByAttributeValue("data-qa", "vacancy-serp__vacancy-compensation").get(0).text();
-                premiumVacancy.setSalary(salary);
-            }
-            catch (IndexOutOfBoundsException e){
-                premiumVacancy.setSalary("Не указана");
+            Element company = element.getElementsByAttributeValue("data-qa", "vacancy-serp__vacancy-employer").first();
+            String c = company == null ? "Не указано" : company.text();
+            vac.setCompany(c);
 
-            }
-            premiumVacancies.add(premiumVacancy);
-        }
-    }
+            Element responsibility = element.getElementsByAttributeValue("data-qa", "vacancy-serp__vacancy_snippet_responsibility").first();
+            String r = responsibility == null ? "Не указано" : responsibility.text();
+            vac.setResponsibility(r);
 
-    private void parseSimpleVacancies(){
-        for(int i = 0; i < simpleVacanciesElements.size(); i++){
-            Vacancy simpleVacancy = new Vacancy();
-            simpleVacancy.setName(simpleVacanciesElements.get(i).getElementsByAttributeValue("data-qa", "vacancy-serp__vacancy-title").get(0).text());
-            try {
-                simpleVacancy.setCompany(simpleVacanciesElements.get(i).getElementsByAttributeValue("data-qa", "vacancy-serp__vacancy-employer").get(0).text());
-            }
-            catch (IndexOutOfBoundsException e){
-                simpleVacancy.setCompany("Не указана");
-            }
-            try {
-                String salary = simpleVacanciesElements.get(i).getElementsByAttributeValue("data-qa", "vacancy-serp__vacancy-compensation").get(0).text();
-                simpleVacancy.setSalary(salary);
-            }
-            catch (IndexOutOfBoundsException e){
-                simpleVacancy.setSalary("Не указана");
+            Element requirement = element.getElementsByAttributeValue("data-qa", "vacancy-serp__vacancy_snippet_requirement").first();
+            String re = requirement == null ? "Не указано" : requirement.text();
+            vac.setRequirement(re);
 
-            }
-            try{
-                simpleVacancy.setResponsibility(simpleVacanciesElements.get(i).getElementsByAttributeValue("data-qa", "vacancy-serp__vacancy_snippet_responsibility").get(0).text());
-            }
-            catch (IndexOutOfBoundsException e){
-                simpleVacancy.setResponsibility("Не указано");
-            }
-            try{
-                simpleVacancy.setRequirement(simpleVacanciesElements.get(i).getElementsByAttributeValue("data-qa", "vacancy-serp__vacancy_snippet_requirement").get(0).text());
-            }
-            catch (IndexOutOfBoundsException e){
-                simpleVacancy.setRequirement("Не указано");
-            }
-            simpleVacancies.add(simpleVacancy);
+            Element salary = element.getElementsByAttributeValue("data-qa", "vacancy-serp__vacancy-compensation").first();
+            String s = salary == null ? "Не указано" : salary.text();
+            vac.setSalary(s);
+
+            vacancy.vacancies.add(vac);
         }
     }
 
     private Document getHeadHunterHtml() throws IOException{
-        String url = URL + pageNumber;
-        System.out.println(url);
-        Document doc = (Document) Jsoup.connect(url).userAgent("Chrome/57.0.2987.133 (jsoup)").referrer("?").get();
+        String u = url + pageNumber;
+        ConsoleHelper.writeMessage(u);
+        Document doc = Jsoup.connect(u).userAgent("Chrome/57.0.2987.133 (jsoup)").referrer("?").get();
         System.out.println("Страница получена!");
         pageNumber++;
         return doc;
     }
 
-    public static List<Vacancy> getPremiumVacancies() {
-        return premiumVacancies;
+    public static Vacancy getPremiumVacancy() {
+        return premiumVacancy;
     }
 
-    public static void setPremiumVacancies(List<Vacancy> premiumVacancies) {
-        Parser.premiumVacancies = premiumVacancies;
+    public static Vacancy getSimpleVacancy() {
+        return simpleVacancy;
     }
-
-    public static List<Vacancy> getSimpleVacancies() {
-        return simpleVacancies;
-    }
-
-    public static void setSimpleVacancies(List<Vacancy> simpleVacancies) {
-        Parser.simpleVacancies = simpleVacancies;
-    }
-
 }
